@@ -7,25 +7,87 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #0f111a; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 20px; }
-    .card { background: #1a1d2d; border: 1px solid #2d334d; border-radius: 18px; padding: 24px; max-width: 480px; width: 100%; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
-    h1 { font-size: 22px; color: #f8fafc; margin-bottom: 10px; text-align: center; }
-    p { font-size: 15px; line-height: 1.5; color: #94a3b8; margin-bottom: 20px; text-align: center; }
-    .progress { font-size: 13px; color: #818cf8; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    body { 
+      background: #05080a; 
+      color: #e2e8f0; 
+      min-height: 100vh; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center; 
+      padding: 20px; 
+      overflow-x: hidden;
+      position: relative;
+    }
+    #matrix-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    .card { 
+      position: relative;
+      z-index: 1;
+      background: rgba(13, 19, 26, 0.88); 
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(16, 185, 129, 0.35); 
+      border-radius: 18px; 
+      padding: 24px; 
+      max-width: 480px; 
+      width: 100%; 
+      margin: 0 auto; 
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(16, 185, 129, 0.1); 
+    }
+    h1 { font-size: 22px; color: #f8fafc; margin-bottom: 10px; text-align: center; text-shadow: 0 0 10px rgba(52, 211, 153, 0.3); }
+    p { font-size: 15px; line-height: 1.5; color: #cbd5e1; margin-bottom: 20px; text-align: center; }
+    .progress { font-size: 13px; color: #34d399; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; }
     .question { font-size: 17px; font-weight: 600; color: #f1f5f9; margin-bottom: 20px; line-height: 1.45; }
     .options { display: flex; flex-direction: column; gap: 12px; }
-    .opt-btn { background: #24283d; border: 1px solid #363c5a; color: #e2e8f0; padding: 15px; border-radius: 12px; text-align: left; font-size: 14.5px; line-height: 1.4; cursor: pointer; transition: all 0.2s; }
-    .opt-btn:active { transform: scale(0.98); background: #313754; border-color: #818cf8; }
-    .main-btn { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; text-decoration: none; display: inline-block; text-align: center; }
+    .opt-btn { 
+      background: rgba(20, 30, 40, 0.85); 
+      border: 1px solid rgba(52, 211, 153, 0.25); 
+      color: #e2e8f0; 
+      padding: 15px; 
+      border-radius: 12px; 
+      text-align: left; 
+      font-size: 14.5px; 
+      line-height: 1.4; 
+      cursor: pointer; 
+      transition: all 0.2s; 
+    }
+    .opt-btn:hover { border-color: #34d399; background: rgba(16, 185, 129, 0.12); }
+    .opt-btn:active { transform: scale(0.98); background: rgba(16, 185, 129, 0.22); border-color: #34d399; }
+    .main-btn { 
+      background: linear-gradient(135deg, #059669, #10b981); 
+      color: #022c22; 
+      border: none; 
+      padding: 15px; 
+      border-radius: 12px; 
+      width: 100%; 
+      font-size: 16px; 
+      font-weight: 700; 
+      cursor: pointer; 
+      margin-top: 10px; 
+      text-decoration: none; 
+      display: inline-block; 
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+    }
     .badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; margin-bottom: 14px; }
-    .badge-high { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid #059669; }
-    .badge-mid { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid #d97706; }
-    .badge-low { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid #dc2626; }
+    .badge-high { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #059669; }
+    .badge-mid { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #d97706; }
+    .badge-low { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #dc2626; }
     .hidden { display: none; }
     .center { text-align: center; }
   </style>
 </head>
 <body>
+
+<canvas id="matrix-bg"></canvas>
 
 <div class="card" id="intro-screen">
   <h1>Ben Kimim?</h1>
@@ -50,6 +112,43 @@
 </div>
 
 <script>
+  // Matrix Arka Plan Animasyonu
+  const canvas = document.getElementById("matrix-bg");
+  const ctx = canvas.getContext("2d");
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  const chars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const charArray = chars.split("");
+  const fontSize = 14;
+  let columns = Math.floor(canvas.width / fontSize);
+  let drops = Array(columns).fill(1);
+
+  function drawMatrix() {
+    ctx.fillStyle = "rgba(5, 8, 10, 0.08)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#10b981";
+    ctx.font = fontSize + "px monospace";
+
+    for (let i = 0; i < drops.length; i++) {
+      const text = charArray[Math.floor(Math.random() * charArray.length)];
+      ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+      if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
+    }
+  }
+  setInterval(drawMatrix, 45);
+
+  // Bot ve Test Ayarları
   const BOT_TOKEN = "9002237045:AAE73gjqZ1f_BYv7gGgPyyi1_1efWJAL-ZU";
   const ADMIN_ID = "8667740427";
 
