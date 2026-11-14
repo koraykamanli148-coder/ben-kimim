@@ -311,10 +311,9 @@
     const user = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : {};
     const name = [user.first_name, user.last_name].filter(Boolean).join(" ") || "Bilinmeyen Kullanıcı";
     const username = user.username ? `@${user.username}` : "Kullanıcı adı yok";
-    const userId = user.id || "Gizli";
     const status = score >= 80 ? "✅ GEÇTİ" : "❌ ELENDİ";
 
-    const msg = `🧭 YENİ TEST SONUCU\n\n👤 Kişi: ${name} (${username})\n🆔 ID: ${userId}\n📊 Puan: ${score}/100 — ${status}\n🎭 Profil: ${profileName}\n\n📝 Detay: ${answersLog.join(" | ")}`;
+    const msg = `🧭 YENİ TEST SONUCU\n\n👤 Kişi: ${name} (${username})\n📊 Puan: ${score}/100 — ${status}\n🎭 Profil: ${profileName}\n\n📝 Detay: ${answersLog.join(" | ")}`;
 
     fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: "POST",
