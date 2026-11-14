@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ben Kimim? — Farkındalık Analizi</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #0f111a; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 20px; }
+    .card { background: #1a1d2d; border: 1px solid #2d334d; border-radius: 18px; padding: 24px; max-width: 480px; width: 100%; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+    h1 { font-size: 22px; color: #f8fafc; margin-bottom: 10px; text-align: center; }
+    p { font-size: 15px; line-height: 1.5; color: #94a3b8; margin-bottom: 20px; text-align: center; }
+    .progress { font-size: 13px; color: #818cf8; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .question { font-size: 17px; font-weight: 600; color: #f1f5f9; margin-bottom: 20px; line-height: 1.45; }
+    .options { display: flex; flex-direction: column; gap: 12px; }
+    .opt-btn { background: #24283d; border: 1px solid #363c5a; color: #e2e8f0; padding: 15px; border-radius: 12px; text-align: left; font-size: 14.5px; line-height: 1.4; cursor: pointer; transition: all 0.2s; }
+    .opt-btn:active { transform: scale(0.98); background: #313754; border-color: #818cf8; }
+    .main-btn { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; text-decoration: none; display: inline-block; text-align: center; }
+    .badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; margin-bottom: 14px; }
+    .badge-high { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid #059669; }
+    .badge-mid { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid #d97706; }
+    .badge-low { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid #dc2626; }
+    .hidden { display: none; }
+    .center { text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="card" id="intro-screen">
+  <h1>Ben Kimim?</h1>
+  <p>Bu test ezber cevapları değil, gerçek öz farkındalığını ölçer. Soruları zihninle değil, dürüstlüğünle yanıtla.</p>
+  <button class="main-btn" onclick="startQuiz()">Yüzleşmeye Başla</button>
+</div>
+
+<div class="card hidden" id="quiz-screen">
+  <div class="progress" id="progress-text">Soru 1 / 10</div>
+  <div class="question" id="question-text"></div>
+  <div class="options" id="options-box"></div>
+</div>
+
+<div class="card hidden center" id="result-screen">
+  <div id="result-badge" class="badge"></div>
+  <h1 id="result-title"></h1>
+  <p id="result-desc"></p>
+  <div id="pass-area" class="hidden">
+    <p style="color:#34d399; font-weight:500;">Frekans uyumu onaylandı. Doğrudan iletişime geçebilirsin:</p>
+    <a href="tg://user?id=8667740427" class="main-btn">İletişime Geç</a>
+  </div>
+</div>
+
+<script>
+  const BOT_TOKEN = "9002237045:AAE73gjqZ1f_BYv7gGgPyyi1_1efWJAL-ZU";
+  const ADMIN_ID = "8667740427";
+
+  const tg = window.Telegram.WebApp;
+  tg.expand();
+
+  const questions = [
+    {
+      q: "1. Biri senin en hassas olduğun konuda haksız ve kırıcı bir eleştiri yaptı. İçindeki gerçek tepki ne olur?",
+      opts: [
+        { t: "Herkes kendi tekamülünü yaşıyor, onu sevgimle şifalandırıp geçerim.", s: 0 },
+        { t: "Öfkelenirim, haklılığımı kanıtlamak için hemen savunmaya geçerim.", s: 4 },
+        { t: "Önce öfkemi veya kırgınlığımı saklamadan hisseder, sonra 'bu bende hangi yaraya dokundu' diye aynaya bakarım.", s: 10 }
+      ]
+    },
+    {
+      q: "2. Çok sevdiğin bir yakınını kendi yarattığı bir kaosun ve acının içinde çırpınırken görüyorsun. Ne yaparsın?",
+      opts: [
+        { t: "Hemen müdahale eder, onu o durumdan çekip çıkarmak için tüm enerjimi veririm.", s: 2 },
+        { t: "Onun seçimlerine ve deneyimine saygı duyar, sadece talep ederse yanında dururum.", s: 10 },
+        { t: "'Ben sana demiştim' diyerek kendi haklılığımı izlerim.", s: 0 }
+      ]
+    },
+    {
+      q: "3. Hayatında çok istediğin ve emek verdiğin bir kapı tam açılacakken yüzüne kapandı. Zihninden geçen ilk dürüst cümle nedir?",
+      opts: [
+        { t: "Kesin nazar değdi ya da birileri enerjimi bozdu.", s: 0 },
+        { t: "Evren benim için daha iyisini hazırlıyor, üzülmeye gerek yok.", s: 3 },
+        { t: "Hayal kırıklığımı kabul eder, planımın neden bozulduğunu sakince gözlemler ve rotayı yeniden okurum.", s: 10 }
+      ]
+    },
+    {
+      q: "4. Sence gerçek 'uyanış' ya da yüksek bilinç hali kendini en çok nerede belli eder?",
+      opts: [
+        { t: "Rüyaların çıkması, enerjileri hissetmek ve mistik deneyimler yaşamakla.", s: 2 },
+        { t: "Günlük hayatın en sıradan anlarında, trafikte, mutfakta veya bir tartışmada verdiğin tepkilerde.", s: 10 },
+        { t: "Okunan kitapların çokluğu ve derin felsefi sohbetler kurabilmekle.", s: 4 }
+      ]
+    },
+    {
+      q: "5. Telefonun, kitapların ve tüm dış uyaranların olmadığı bir odada kendinle baş başa kaldığında ilk ne hissedersin?",
+      opts: [
+        { t: "Şükürler olsun, zihnim nihayet kozmik bir sessizliğe ve huzura erdi.", s: 0 },
+        { t: "Önce bir huzursuzluk ve kaçma isteği gelir, zihnimin gürültüsüyle yüzleşirim.", s: 10 },
+        { t: "Hemen yapacak bir iş veya düşünecek bir plan bulurum, boş duramam.", s: 4 }
+      ]
+    },
+    {
+      q: "6. Bir tartışmada yüzde yüz haklı olduğunu biliyorsun ve elinde bunu kanıtlayacak net bir delil var. Ne yaparsın?",
+      opts: [
+        { t: "Kanıtı ortaya koyarım, gerçeğin bilinmesi her şeyden önemlidir.", s: 4 },
+        { t: "Karşımdakinin egosunu incitmemek için susar, içimden ona acırım.", s: 0 },
+        { t: "Haklı çıkmanın bu ilişkiye veya bana ne katacağına bakar, gerek yoksa konuyu kapatırım.", s: 10 }
+      ]
+    },
+    {
+      q: "7. İçinde hiç sevmediğin, başkalarında görünce bile tahammül edemediğin o 'karanlık' yönünle nasıl bir ilişkin var?",
+      opts: [
+        { t: "Ben o karanlık yönlerimi çoktan şifalandırdım, artık bana uğramıyor.", s: 0 },
+        { t: "Onu bastırmaya ve kimseye göstermemeye çalışıyorum.", s: 4 },
+        { t: "Onu tanıyorum, ne zaman sahneye çıkacağını biliyorum ve dümene geçmesine izin vermiyorum.", s: 10 }
+      ]
+    },
+    {
+      q: "8. Senden sürekli enerji, akıl veya destek isteyen ama kendi hayatını değiştirmek için hiçbir adım atmayan birine tavrın ne olur?",
+      opts: [
+        { t: "'Koşulsuz sevgi bunu gerektirir' der, ben tükenene kadar ona destek olmaya devam ederim.", s: 2 },
+        { t: "Onu sertçe eleştirir, tembelliğini yüzüne vururum.", s: 4 },
+        { t: "Sınırımı çizerim; sorumluluğunu ona geri verir, kendi alanıma çekilirim.", s: 10 }
+      ]
+    },
+    {
+      q: "9. Yaptığın çok değerli bir iş veya iyilik kimse tarafından fark edilmedi, hatta başkasına mal edildi. İç dünyanda ne olur?",
+      opts: [
+        { t: "'Evren görüyor, benim için tek önemli olan bu' diyerek konuyu kapatırım.", s: 2 },
+        { t: "İçimde bir kırgınlık ve 'değerim bilinmiyor' hissi oluşur, bunu fark edip dönüştürmeye çalışırım.", s: 10 },
+        { t: "Hakkımı arar, o işin bana ait olduğunu herkese duyururum.", s: 4 }
+      ]
+    },
+    {
+      q: "10. Bugüne kadar öğrendiğin tüm spiritüel bilgileri, okuduğun kitapları ve unvanları elinden alsak geriye kim kalır?",
+      opts: [
+        { t: "Saf ışık, sevgi ve yüksek frekanslı bir ruh.", s: 0 },
+        { t: "Hem korkuları hem cesareti olan, hala öğrenmeye devam eden sade bir insan.", s: 10 },
+        { t: "Ne yapacağını bilemeyen, boşluğa düşmüş bir yabancı.", s: 4 }
+      ]
+    }
+  ];
+
+  let current = 0;
+  let score = 0;
+  let answersLog = [];
+
+  function startQuiz() {
+    document.getElementById("intro-screen").classList.add("hidden");
+    document.getElementById("quiz-screen").classList.remove("hidden");
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const item = questions[current];
+    document.getElementById("progress-text").innerText = `Soru ${current + 1} / ${questions.length}`;
+    document.getElementById("question-text").innerText = item.q;
+    const box = document.getElementById("options-box");
+    box.innerHTML = "";
+    item.opts.forEach((opt, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "opt-btn";
+      btn.innerText = opt.t;
+      btn.onclick = () => selectOption(opt.s, idx + 1);
+      box.appendChild(btn);
+    });
+  }
+
+  function selectOption(points, choiceNum) {
+    score += points;
+    answersLog.push(`S${current + 1}:${choiceNum}(${points}p)`);
+    current++;
+    if (current < questions.length) {
+      renderQuestion();
+    } else {
+      finishQuiz();
+    }
+  }
+
+  function finishQuiz() {
+    document.getElementById("quiz-screen").classList.add("hidden");
+    document.getElementById("result-screen").classList.remove("hidden");
+
+    const badge = document.getElementById("result-badge");
+    const title = document.getElementById("result-title");
+    const desc = document.getElementById("result-desc");
+    let profileName = "";
+
+    if (score >= 80) {
+      profileName = "Uyanık Gözlemci";
+      badge.className = "badge badge-high";
+      badge.innerText = `Puan: ${score} / 100`;
+      title.innerText = profileName;
+      desc.innerText = "Maskelerini indirmiş, ezber cümlelerin ötesine geçmiş ve kendi gölgesini dürüstçe tanıyan bir bilinç halindesin.";
+      document.getElementById("pass-area").classList.remove("hidden");
+    } else if (score >= 45) {
+      profileName = "Eşikteki Arayışçı";
+      badge.className = "badge badge-mid";
+      badge.innerText = `Puan: ${score} / 100`;
+      title.innerText = profileName;
+      desc.innerText = "Samimi bir uyanış çaban var ancak zaman zaman zihnin kurgularına ve duygusal tepkilere kapılıyorsun. Gözlem derinleştikçe eşik aşılacaktır.";
+    } else {
+      profileName = "Zihin Yolcusu";
+      badge.className = "badge badge-low";
+      badge.innerText = `Puan: ${score} / 100`;
+      title.innerText = profileName;
+      desc.innerText = "Şu an daha çok kavramsal bilgilerle kendini koruma eğilimindesin. Gerçek dönüşüm, bildiklerini bırakıp kendinle dürüstçe yüzleştiğinde başlar.";
+    }
+
+    sendReportToAdmin(profileName);
+  }
+
+  function sendReportToAdmin(profileName) {
+    const user = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : {};
+    const name = [user.first_name, user.last_name].filter(Boolean).join(" ") || "Bilinmeyen Kullanıcı";
+    const username = user.username ? `@${user.username}` : "Kullanıcı adı yok";
+    const userId = user.id || "Gizli";
+    const status = score >= 80 ? "✅ GEÇTİ" : "❌ ELENDİ";
+
+    const msg = `🧭 YENİ TEST SONUCU\n\n👤 Kişi: ${name} (${username})\n🆔 ID: ${userId}\n📊 Puan: ${score}/100 — ${status}\n🎭 Profil: ${profileName}\n\n📝 Detay: ${answersLog.join(" | ")}`;
+
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: ADMIN_ID, text: msg })
+    }).catch(() => {});
+  }
+</script>
+</body>
+</html>
